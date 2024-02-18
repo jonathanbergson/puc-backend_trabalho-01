@@ -479,6 +479,8 @@ MonoBehaviour:
   buttonNext: {fileID: 922125071}
   buttonPrevious: {fileID: 241476966}
   buttonLoad: {fileID: 1069960812}
+  fallbackImageLoading: {fileID: 21300000, guid: acc1366dff22219bfb64b490786108b2, type: 3}
+  fallbackImageError: {fileID: 21300000, guid: b201ac6bc60c87ae0b331e136df729e2, type: 3}
 --- !u!114 &380212635
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1635,7 +1637,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: acc1366dff22219bfb64b490786108b2, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

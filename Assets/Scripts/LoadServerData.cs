@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class LoadServerData : MonoBehaviour
@@ -24,6 +25,10 @@ public class LoadServerData : MonoBehaviour
     [SerializeField] private Button buttonPrevious;
     [SerializeField] private Button buttonLoad;
 
+    [Header("Fallback Image")]
+    [SerializeField] private Sprite fallbackImageLoading;
+    [SerializeField] private Sprite fallbackImageError;
+
     private void Start()
     {
         SetupButtonClicks();
@@ -33,9 +38,10 @@ public class LoadServerData : MonoBehaviour
     private IEnumerator LoadImage(string url = null)
     {
         if (inputImageUrl) inputImageUrl.text = url;
+        if (image) image.sprite = fallbackImageLoading;
+
         var request = UnityWebRequestTexture.GetTexture(url);
         yield return request.SendWebRequest();
-
         if (request.result == UnityWebRequest.Result.Success)
         {
             var texture = DownloadHandlerTexture.GetContent(request);
@@ -44,17 +50,26 @@ public class LoadServerData : MonoBehaviour
             var sprite = Sprite.Create(texture, rect, pivot);
             if (image) image.sprite = sprite;
         }
+        else
+        {
+            if (image) image.sprite = fallbackImageError;
+        }
     }
 
     private IEnumerator LoadText(string url = null)
     {
         if (inputTextUrl) inputTextUrl.text = url;
+        if (text) text.text = "Loading...";
+
         var request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();
-
         if (request.result == UnityWebRequest.Result.Success)
         {
             if (text) text.text = request.downloadHandler.text;
+        }
+        else
+        {
+            if (text) text.text = "Error loading text";
         }
     }
 
@@ -99,6 +114,7 @@ public class LoadServerData : MonoBehaviour
     {
         StartCoroutine(LoadImage(inputImageUrl.text));
         StartCoroutine(LoadText(inputTextUrl.text));
+        _index = 0;
         if (textIndex) textIndex.text = "??";
     }
 }
