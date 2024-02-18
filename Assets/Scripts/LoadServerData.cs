@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class LoadServerData : MonoBehaviour
@@ -31,90 +30,102 @@ public class LoadServerData : MonoBehaviour
 
     private void Start()
     {
-        SetupButtonClicks();
-        LoadData();
+        SetupButtonListeners();
+        GetSlideData();
     }
 
-    private IEnumerator LoadImage(string url = null)
+    private IEnumerator GetImageFromServer(string url = null)
     {
-        if (inputImageUrl) inputImageUrl.text = url;
-        if (image) image.sprite = fallbackImageLoading;
+        if (!image) yield break;
 
         var request = UnityWebRequestTexture.GetTexture(url);
         yield return request.SendWebRequest();
+
         if (request.result == UnityWebRequest.Result.Success)
         {
             var texture = DownloadHandlerTexture.GetContent(request);
             var rect = new Rect(0, 0, texture.width, texture.height);
             var pivot = new Vector2(texture.width / 2.0f, texture.height / 2.0f);
             var sprite = Sprite.Create(texture, rect, pivot);
-            if (image) image.sprite = sprite;
+            image.sprite = sprite;
         }
         else
         {
-            if (image) image.sprite = fallbackImageError;
+            image.sprite = fallbackImageError;
         }
     }
 
-    private IEnumerator LoadText(string url = null)
+    private IEnumerator GetTextFromServer(string url = null)
     {
-        if (inputTextUrl) inputTextUrl.text = url;
-        if (text) text.text = "Loading...";
+        if (!text) yield break;
 
         var request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            if (text) text.text = request.downloadHandler.text;
-        }
-        else
-        {
-            if (text) text.text = "Error loading text";
-        }
+
+        text.text = request.result == UnityWebRequest.Result.Success
+            ? request.downloadHandler.text
+            : "Error loading text";
     }
 
-    private void SetupButtonClicks()
+    private void SetSlideIndexText(int index = -1)
     {
-        if (buttonPrevious)
-        {
-            buttonPrevious.onClick.AddListener(() =>
-            {
-                _index--;
-                if (_index < 0) _index = MaxIndex;
-                LoadData(_index);
-            });
-        }
-
-        if (buttonNext)
-        {
-            buttonNext.onClick.AddListener(() =>
-            {
-                _index++;
-                if (_index > MaxIndex) _index = 0;
-                LoadData(_index);
-            });
-        }
-
-        if (buttonLoad)
-        {
-            buttonLoad.onClick.AddListener(LoadDataFromInput);
-        }
+        var indexText = "??";
+        if (index >= 0) indexText = "#" + (index + 1);
+        if (textIndex) textIndex.text = indexText;
     }
 
-    private void LoadData(int index = 0)
+    private void SetLoadingState(string imageUrl, string textUrl)
+    {
+        if (image) image.sprite = fallbackImageLoading;
+        if (inputImageUrl) inputImageUrl.text = imageUrl;
+
+        if (text) text.text = "Loading...";
+        if (inputTextUrl) inputTextUrl.text = textUrl;
+    }
+
+    private void GetSlideData(int index = 0)
     {
         var imageUrl = BaseUrl + $"00{index + 1}.png";
         var textUrl = BaseUrl + $"00{index + 1}.txt";
-        StartCoroutine(LoadImage(imageUrl));
-        StartCoroutine(LoadText(textUrl));
-        if (textIndex) textIndex.text = "#" + (_index + 1);
+
+        SetSlideIndexText(index);
+        SetLoadingState(imageUrl, textUrl);
+
+        StartCoroutine(GetImageFromServer(imageUrl));
+        StartCoroutine(GetTextFromServer(textUrl));
     }
 
-    private void LoadDataFromInput()
+    private void HandleClickPrevButton()
     {
-        StartCoroutine(LoadImage(inputImageUrl.text));
-        StartCoroutine(LoadText(inputTextUrl.text));
-        _index = 0;
-        if (textIndex) textIndex.text = "??";
+        _index--;
+        if (_index < 0) _index = MaxIndex;
+        GetSlideData(_index);
+    }
+
+    private void HandleClickNextButton()
+    {
+        _index++;
+        if (_index > MaxIndex) _index = 0;
+        GetSlideData(_index);
+    }
+
+    private void HandleClickLoadButton()
+    {
+        StartCoroutine(GetImageFromServer(inputImageUrl.text));
+        StartCoroutine(GetTextFromServer(inputTextUrl.text));
+        SetSlideIndexText();
+        _index = -1;
+    }
+
+    private void SetupButtonListeners()
+    {
+        if (buttonPrevious)
+            buttonPrevious.onClick.AddListener(HandleClickPrevButton);
+
+        if (buttonNext)
+            buttonNext.onClick.AddListener(HandleClickNextButton);
+
+        if (buttonLoad)
+            buttonLoad.onClick.AddListener(HandleClickLoadButton);
     }
 }
