@@ -69,7 +69,7 @@ public class LoadServerData : MonoBehaviour
 
     private void SetSlideIndexText(int index = -1)
     {
-        var indexText = "??";
+        var indexText = "";
         if (index >= 0) indexText = "#" + (index + 1);
         if (textIndex) textIndex.text = indexText;
     }
